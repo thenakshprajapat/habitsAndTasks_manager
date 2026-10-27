@@ -6,7 +6,11 @@ import { TasksSection } from './components/TasksSection';
 import { HabitModal } from './components/HabitModal';
 import { TaskModal } from './components/TaskModal';
 import { SettingsModal } from './components/SettingsModal';
+import { AuthModal } from './components/AuthModal';
 import { CommandBar } from './components/CommandBar';
+import { LeftSidebar } from './components/LeftSidebar';
+import { RightSidebar } from './components/RightSidebar';
+import { MobileBottomBar } from './components/MobileBottomBar';
 import { KeyboardShortcutsFooter } from './components/KeyboardShortcutsFooter';
 import type { Habit, Task } from './types';
 import { addDays } from './utils/dateUtils';
@@ -28,6 +32,7 @@ export const AppContent: React.FC = () => {
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isCommandBarOpen, setIsCommandBarOpen] = useState(false);
 
   // Global Keyboard Navigation & Hotkeys
@@ -51,6 +56,10 @@ export const AppContent: React.FC = () => {
         }
         if (isSettingsOpen) {
           setIsSettingsOpen(false);
+          return;
+        }
+        if (isAuthModalOpen) {
+          setIsAuthModalOpen(false);
           return;
         }
         if (isCommandBarOpen) {
@@ -99,6 +108,7 @@ export const AppContent: React.FC = () => {
     isHabitModalOpen,
     isTaskModalOpen,
     isSettingsOpen,
+    isAuthModalOpen,
     isCommandBarOpen,
     selectedDate,
     navigateSelection,
@@ -127,49 +137,86 @@ export const AppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-canvas text-primary selection:bg-[#dfdcd5] dark:selection:bg-[#383531]">
-      <main className="max-w-[640px] mx-auto px-4 sm:px-6 pb-20">
-        {/* Editorial Date and Actions Header */}
-        <Header
-          onOpenSettings={() => setIsSettingsOpen(true)}
-          onOpenNewHabit={() => {
-            setHabitToEdit(null);
-            setIsHabitModalOpen(true);
-          }}
-          onOpenNewTask={() => {
-            setTaskToEdit(null);
-            setIsTaskModalOpen(true);
-          }}
-        />
+      {/* 3-Column Desktop Grid / 1-Column Mobile Composition */}
+      <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 pb-24 lg:pb-16 pt-2">
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-center gap-8 xl:gap-12">
+          
+          {/* Left Column (Desktop only: Mini Calendar, Intention, Consistency) */}
+          <div className="hidden lg:block w-[260px] xl:w-[280px] flex-shrink-0 sticky top-6">
+            <LeftSidebar />
+          </div>
 
-        {/* Command / Filter Bar */}
-        <CommandBar
-          isOpen={isCommandBarOpen}
-          onClose={() => setIsCommandBarOpen(false)}
-        />
+          {/* Center Column: Core Today View */}
+          <main className="w-full max-w-[640px] mx-auto flex-1">
+            {/* Header with greeting, date & actions */}
+            <Header
+              onOpenSettings={() => setIsSettingsOpen(true)}
+              onOpenAuthModal={() => setIsAuthModalOpen(true)}
+              onOpenNewHabit={() => {
+                setHabitToEdit(null);
+                setIsHabitModalOpen(true);
+              }}
+              onOpenNewTask={() => {
+                setTaskToEdit(null);
+                setIsTaskModalOpen(true);
+              }}
+            />
 
-        {/* Today's Habits Section */}
-        <HabitsSection
-          onOpenNewHabit={() => {
-            setHabitToEdit(null);
-            setIsHabitModalOpen(true);
-          }}
-          onEditHabit={handleOpenEditHabit}
-        />
+            {/* Quick Filter / Command Bar */}
+            <CommandBar
+              isOpen={isCommandBarOpen}
+              onClose={() => setIsCommandBarOpen(false)}
+            />
 
-        {/* Hairline Editorial Divider */}
-        <div className="hairline-t my-2" />
+            {/* Habits Section */}
+            <HabitsSection
+              onOpenNewHabit={() => {
+                setHabitToEdit(null);
+                setIsHabitModalOpen(true);
+              }}
+              onEditHabit={handleOpenEditHabit}
+            />
 
-        {/* Today's Tasks Section */}
-        <TasksSection
-          onOpenNewTask={() => {
-            setTaskToEdit(null);
-            setIsTaskModalOpen(true);
-          }}
-          onEditTask={handleOpenEditTask}
-        />
-      </main>
+            {/* Hairline Editorial Rule */}
+            <div className="hairline-t my-3" />
 
-      {/* Persistent Keyboard Shortcuts Hint Bar */}
+            {/* Tasks Section */}
+            <TasksSection
+              onOpenNewTask={() => {
+                setTaskToEdit(null);
+                setIsTaskModalOpen(true);
+              }}
+              onEditTask={handleOpenEditTask}
+            />
+          </main>
+
+          {/* Right Column (Desktop only: Cloud Sync Badge, Upcoming Agenda, Streaks Leaderboard) */}
+          <div className="hidden lg:block w-[260px] xl:w-[280px] flex-shrink-0 sticky top-6">
+            <RightSidebar
+              onOpenAuthModal={() => setIsAuthModalOpen(true)}
+              onEditTask={handleOpenEditTask}
+              onEditHabit={handleOpenEditHabit}
+            />
+          </div>
+
+        </div>
+      </div>
+
+      {/* Mobile Bottom Navigation Bar (Visible only on mobile/tablet) */}
+      <MobileBottomBar
+        onOpenNewHabit={() => {
+          setHabitToEdit(null);
+          setIsHabitModalOpen(true);
+        }}
+        onOpenNewTask={() => {
+          setTaskToEdit(null);
+          setIsTaskModalOpen(true);
+        }}
+        onOpenSearch={() => setIsCommandBarOpen(true)}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
+      />
+
+      {/* Desktop Keyboard Shortcuts Bar (Visible only on large screens) */}
       <KeyboardShortcutsFooter />
 
       {/* Modals */}
@@ -194,6 +241,11 @@ export const AppContent: React.FC = () => {
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+      />
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
       />
     </div>
   );

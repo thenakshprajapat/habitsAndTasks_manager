@@ -1,24 +1,36 @@
 import React from 'react';
 import { useData } from '../context/DataContext';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import { formatEditorialDate, getTodayKey, addDays } from '../utils/dateUtils';
 
 interface HeaderProps {
   onOpenSettings: () => void;
   onOpenNewHabit: () => void;
   onOpenNewTask: () => void;
+  onOpenAuthModal: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onOpenSettings,
   onOpenNewHabit,
   onOpenNewTask,
+  onOpenAuthModal,
 }) => {
   const { selectedDate, setSelectedDate, habits, habitLogs, tasks, getHabitStreaks } = useData();
   const { isDark, toggleTheme } = useTheme();
+  const { userName } = useAuth();
 
   const isToday = selectedDate === getTodayKey();
   const dateInfo = formatEditorialDate(selectedDate);
+
+  // Dynamic editorial greeting based on local hour
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
 
   // Compute daily summary stats
   const scheduledHabitsToday = habits.filter(h => {
@@ -35,17 +47,17 @@ export const Header: React.FC<HeaderProps> = ({
   const completedTasksToday = dueTasksToday.filter(t => t.done).length;
 
   return (
-    <header className="pt-10 pb-8 select-none">
-      {/* Top navigation row: Logo/brand mark & actions */}
-      <div className="flex items-center justify-between pb-6 text-xs text-secondary tracking-wider font-mono uppercase">
-        <div className="flex items-center gap-3">
-          <span className="font-semibold text-primary tracking-widest text-[13px]">
+    <header className="pt-6 sm:pt-10 pb-6 sm:pb-8 select-none">
+      {/* Top tier: Brand and global tools */}
+      <div className="flex items-center justify-between pb-4 sm:pb-6 text-xs text-secondary tracking-wider font-mono">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <span className="font-semibold text-primary tracking-widest text-xs sm:text-[13px]">
             STUDIO <span className="opacity-40">/</span> TODAY
           </span>
           {!isToday && (
             <button
               onClick={() => setSelectedDate(getTodayKey())}
-              className="px-2 py-0.5 text-[11px] font-sans rounded-none border border-border-subtle hover:border-primary text-primary transition-colors cursor-pointer"
+              className="px-2 py-0.5 text-[10px] sm:text-[11px] font-sans border border-border-subtle hover:border-primary text-primary transition-colors cursor-pointer"
               title="Return to today"
             >
               Back to Today
@@ -53,53 +65,18 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-4 text-[13px]">
-          {/* Day stepping buttons */}
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setSelectedDate(addDays(selectedDate, -1))}
-              className="p-1 hover:text-primary transition-colors cursor-pointer"
-              title="Previous day (Left Arrow)"
-              aria-label="Previous day"
-            >
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M10 12L6 8L10 4" />
-              </svg>
-            </button>
-            <span className="font-mono text-[11px] px-1 text-tertiary">
-              {isToday ? 'Today' : selectedDate}
+        {/* Action icons */}
+        <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-[13px]">
+          {/* User Account Button with Name */}
+          <button
+            onClick={onOpenAuthModal}
+            className="flex items-center gap-1.5 px-2 py-1 text-xs font-mono text-secondary hover:text-primary transition-colors cursor-pointer border border-transparent hover:border-border-subtle"
+            title="Account & Cross-Device Sync"
+          >
+            <span className="w-2 h-2 rounded-full bg-complete" />
+            <span className="truncate max-w-[80px] sm:max-w-[120px] font-sans text-xs font-medium">
+              {userName}
             </span>
-            <button
-              onClick={() => setSelectedDate(addDays(selectedDate, 1))}
-              className="p-1 hover:text-primary transition-colors cursor-pointer"
-              title="Next day (Right Arrow)"
-              aria-label="Next day"
-            >
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M6 12L10 8L6 4" />
-              </svg>
-            </button>
-          </div>
-
-          <span className="text-border-subtle">|</span>
-
-          {/* Quick Action Buttons */}
-          <button
-            onClick={onOpenNewHabit}
-            className="hover:text-primary transition-colors cursor-pointer flex items-center gap-1 font-sans text-xs"
-            title="Create Habit (Hotkey: H)"
-          >
-            <span>+ Habit</span>
-            <kbd className="font-mono text-[10px] px-1 bg-surface border border-border-subtle text-tertiary">H</kbd>
-          </button>
-
-          <button
-            onClick={onOpenNewTask}
-            className="hover:text-primary transition-colors cursor-pointer flex items-center gap-1 font-sans text-xs"
-            title="Create Task (Hotkey: N)"
-          >
-            <span>+ Task</span>
-            <kbd className="font-mono text-[10px] px-1 bg-surface border border-border-subtle text-tertiary">N</kbd>
           </button>
 
           <span className="text-border-subtle">|</span>
@@ -107,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Theme toggle */}
           <button
             onClick={toggleTheme}
-            className="p-1 hover:text-primary transition-colors cursor-pointer"
+            className="p-1 text-secondary hover:text-primary transition-colors cursor-pointer"
             title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             aria-label="Toggle theme"
           >
@@ -126,7 +103,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Settings / Backup */}
           <button
             onClick={onOpenSettings}
-            className="p-1 hover:text-primary transition-colors cursor-pointer"
+            className="p-1 text-secondary hover:text-primary transition-colors cursor-pointer"
             title="Settings & Data Backup"
             aria-label="Settings"
           >
@@ -138,27 +115,85 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Editorial Large Date Headline: Asymmetric typography */}
+      {/* Greeting and Large Date Headline */}
       <div className="pt-2 pb-4">
-        <p className="font-mono text-xs uppercase tracking-widest text-secondary mb-1">
-          {dateInfo.dayOfWeek}
-        </p>
-        <h1 className="font-serif text-[42px] sm:text-[50px] leading-[1.05] tracking-tight font-normal text-primary">
+        <div className="flex items-center gap-2 mb-1">
+          <p className="font-serif italic text-base sm:text-lg text-secondary">
+            {getGreeting()}, <button onClick={onOpenAuthModal} className="text-primary hover:underline underline-offset-4 cursor-pointer">{userName}</button>
+          </p>
+          <span className="text-border-subtle">·</span>
+          <p className="font-mono text-xs uppercase tracking-widest text-tertiary">
+            {dateInfo.dayOfWeek}
+          </p>
+        </div>
+
+        <h1 className="font-serif text-[36px] sm:text-[50px] leading-[1.05] tracking-tight font-normal text-primary">
           {dateInfo.dayNumber} {dateInfo.monthName} <span className="font-light opacity-50">{dateInfo.year}</span>
         </h1>
       </div>
 
+      {/* Day Navigation & Action Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-2 pb-4 hairline-b">
+        {/* Day stepper */}
+        <div className="flex items-center gap-1 font-mono text-xs text-secondary">
+          <button
+            onClick={() => setSelectedDate(addDays(selectedDate, -1))}
+            className="p-1.5 border border-border-subtle hover:border-primary text-secondary hover:text-primary transition-colors cursor-pointer"
+            title="Previous day (Left Arrow)"
+            aria-label="Previous day"
+          >
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M10 12L6 8L10 4" />
+            </svg>
+          </button>
+          <span className="px-2 text-[11px] font-medium text-primary">
+            {isToday ? 'Today' : selectedDate}
+          </span>
+          <button
+            onClick={() => setSelectedDate(addDays(selectedDate, 1))}
+            className="p-1.5 border border-border-subtle hover:border-primary text-secondary hover:text-primary transition-colors cursor-pointer"
+            title="Next day (Right Arrow)"
+            aria-label="Next day"
+          >
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M6 12L10 8L6 4" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Quick Add Buttons */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onOpenNewHabit}
+            className="px-2.5 py-1 text-xs font-mono border border-border-subtle hover:border-primary text-primary transition-colors cursor-pointer flex items-center gap-1.5"
+            title="Create Habit (H)"
+          >
+            <span>+ Habit</span>
+            <kbd className="hidden sm:inline-block font-mono text-[9px] px-1 bg-surface border border-border-subtle text-tertiary">H</kbd>
+          </button>
+
+          <button
+            onClick={onOpenNewTask}
+            className="px-2.5 py-1 text-xs font-mono border border-border-subtle hover:border-primary text-primary transition-colors cursor-pointer flex items-center gap-1.5"
+            title="Create Task (N)"
+          >
+            <span>+ Task</span>
+            <kbd className="hidden sm:inline-block font-mono text-[9px] px-1 bg-surface border border-border-subtle text-tertiary">N</kbd>
+          </button>
+        </div>
+      </div>
+
       {/* Calm Status Ticker */}
-      <div className="flex items-center justify-between text-xs text-secondary pt-2 pb-4 hairline-b">
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1.5 font-mono">
+      <div className="flex items-center justify-between text-xs text-secondary pt-2.5">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <span className="flex items-center gap-1.5 font-mono text-[11px] sm:text-xs">
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-complete"></span>
             <span>
               {completedHabitsToday} of {scheduledHabitsToday.length} habits
             </span>
           </span>
           <span className="text-border-subtle">·</span>
-          <span className="flex items-center gap-1.5 font-mono">
+          <span className="flex items-center gap-1.5 font-mono text-[11px] sm:text-xs">
             <span>
               {completedTasksToday} of {dueTasksToday.length} tasks
             </span>

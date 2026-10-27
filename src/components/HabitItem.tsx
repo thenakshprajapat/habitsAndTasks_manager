@@ -40,20 +40,20 @@ export const HabitItem: React.FC<HabitItemProps> = ({ habit, isSelected, onEdit 
   return (
     <div
       onClick={() => setSelectedItemId(habit.id)}
-      className={`group transition-all duration-150 py-3 px-2 hairline-b ${
+      className={`group transition-all duration-150 py-3 sm:py-3.5 px-2 sm:px-3 hairline-b ${
         isSelected ? 'bg-surface/80 ring-1 ring-border-subtle' : 'hover:bg-surface/30'
       } ${habit.archived ? 'opacity-50' : ''}`}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-2.5 sm:gap-3">
         {/* Left: Checkbox & Name */}
-        <div className="flex items-start gap-3 flex-1 min-w-0">
+        <div className="flex items-start gap-2.5 sm:gap-3 flex-1 min-w-0">
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
               toggleHabit(habit.id, selectedDate);
             }}
-            className={`mt-0.5 w-[18px] h-[18px] rounded-[2px] flex items-center justify-center transition-all duration-180 cursor-pointer flex-shrink-0 ${
+            className={`mt-0.5 w-[20px] h-[20px] rounded-[2px] flex items-center justify-center transition-all duration-180 cursor-pointer flex-shrink-0 ${
               isCompleted
                 ? 'bg-complete text-complete-text border border-complete'
                 : 'border border-border-subtle hover:border-primary bg-canvas'
@@ -61,7 +61,7 @@ export const HabitItem: React.FC<HabitItemProps> = ({ habit, isSelected, onEdit 
             aria-label={`Toggle habit ${habit.name}`}
           >
             {isCompleted && (
-              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="2.5 6 4.8 8.5 9.5 3.5" />
               </svg>
             )}
@@ -70,8 +70,8 @@ export const HabitItem: React.FC<HabitItemProps> = ({ habit, isSelected, onEdit 
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline gap-2 flex-wrap">
               <span
-                className={`font-sans text-[15px] leading-snug transition-colors duration-180 ${
-                  isCompleted ? 'text-secondary line-through opacity-75' : 'text-primary'
+                className={`font-sans text-[14px] sm:text-[15px] leading-snug break-words transition-colors duration-180 ${
+                  isCompleted ? 'text-secondary/70 line-through decoration-tertiary/50' : 'text-primary'
                 }`}
               >
                 {habit.name}
@@ -83,7 +83,7 @@ export const HabitItem: React.FC<HabitItemProps> = ({ habit, isSelected, onEdit 
               )}
             </div>
 
-            <div className="flex items-center gap-3 mt-1 text-[11px] font-mono text-tertiary">
+            <div className="flex items-center gap-2.5 mt-1 text-[10px] sm:text-[11px] font-mono text-tertiary flex-wrap">
               <span>{formatScheduleLabel()}</span>
               {!streaks.isScheduledToday && (
                 <span className="text-secondary/70">· Not scheduled today</span>
@@ -93,18 +93,18 @@ export const HabitItem: React.FC<HabitItemProps> = ({ habit, isSelected, onEdit 
         </div>
 
         {/* Right: Streaks & Action Toggles */}
-        <div className="flex items-center gap-3 font-mono text-xs flex-shrink-0 pt-0.5">
+        <div className="flex items-center gap-2 sm:gap-3 font-mono text-xs flex-shrink-0 pt-0.5">
           {/* Current & Best Streak */}
-          <div className="flex items-center gap-2 text-right">
+          <div className="flex flex-col sm:flex-row items-end sm:items-center gap-0.5 sm:gap-2 text-right">
             <span
-              className={`font-medium tracking-tight ${
+              className={`font-semibold tracking-tight text-[11px] sm:text-xs ${
                 streaks.currentStreak > 0 ? 'text-primary' : 'text-tertiary'
               }`}
               title="Current Streak"
             >
               {streaks.currentStreak}d
             </span>
-            <span className="text-tertiary text-[11px]" title="Best All-Time Streak">
+            <span className="text-tertiary text-[10px] sm:text-[11px]" title="Best All-Time Streak">
               best {streaks.bestStreak}d
             </span>
           </div>
@@ -121,7 +121,7 @@ export const HabitItem: React.FC<HabitItemProps> = ({ habit, isSelected, onEdit 
             title={isExpanded ? 'Hide 90-day activity matrix' : 'Show 90-day activity matrix'}
             aria-label="Toggle activity matrix"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <rect x="3" y="3" width="7" height="7" />
               <rect x="14" y="3" width="7" height="7" />
               <rect x="14" y="14" width="7" height="7" />
@@ -135,7 +135,7 @@ export const HabitItem: React.FC<HabitItemProps> = ({ habit, isSelected, onEdit 
               e.stopPropagation();
               onEdit(habit);
             }}
-            className="p-1 text-tertiary hover:text-primary transition-colors cursor-pointer opacity-0 group-hover:opacity-100 focus:opacity-100"
+            className="p-1 text-tertiary hover:text-primary transition-colors cursor-pointer opacity-70 sm:opacity-0 group-hover:opacity-100 focus:opacity-100"
             title="Edit habit"
             aria-label="Edit habit"
           >
