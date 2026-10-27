@@ -30,13 +30,15 @@ export function getFirebaseConfig(): FirebaseConfig | null {
     }
   }
 
+  const clean = (val: unknown) => (typeof val === 'string' ? val.replace(/^["']|["']$/g, '').trim() : '');
+
   const envConfig: FirebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-    appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
+    apiKey: clean(import.meta.env.VITE_FIREBASE_API_KEY),
+    authDomain: clean(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN),
+    projectId: clean(import.meta.env.VITE_FIREBASE_PROJECT_ID),
+    storageBucket: clean(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET),
+    messagingSenderId: clean(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID),
+    appId: clean(import.meta.env.VITE_FIREBASE_APP_ID),
   };
 
   if (envConfig.apiKey && envConfig.projectId) {
