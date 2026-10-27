@@ -3,6 +3,7 @@ import type { Habit, HabitLog, Task, StreakInfo, ExportPayload } from '../types'
 import { dataStore } from '../storage/DataStore';
 import { getTodayKey } from '../utils/dateUtils';
 import { calculateStreaks } from '../utils/streakUtils';
+import { cloudSync } from '../services/cloudSync';
 
 interface DataContextType {
   habits: Habit[];
@@ -83,6 +84,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     refreshData();
+    cloudSync.setOnRemoteChange(refreshData);
   }, [refreshData]);
 
   // Habit Streaks memoized computation helper

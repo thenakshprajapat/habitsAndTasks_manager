@@ -1,6 +1,7 @@
 import { db } from './db';
 import type { Habit, HabitLog, Task, IDataStore, ExportPayload } from '../types';
 import { getTodayKey, addDays } from '../utils/dateUtils';
+import { cloudSync } from '../services/cloudSync';
 
 export class DexieDataStore implements IDataStore {
   // --- Habits ---
@@ -18,10 +19,15 @@ export class DexieDataStore implements IDataStore {
 
   async saveHabit(habit: Habit): Promise<void> {
     await db.habits.put(habit);
+    cloudSync.syncHabit(habit);
   }
 
   async archiveHabit(id: string, archived: boolean): Promise<void> {
     await db.habits.update(id, { archived });
+    const habit = await db.habits.get(id);
+    if (habit) {
+      cloudSync.syncHabit(habit);
+    }
   }
 
   async deleteHabit(id: string): Promise<void> {
@@ -29,6 +35,7 @@ export class DexieDataStore implements IDataStore {
       await db.habits.delete(id);
       await db.habitLogs.where('habitId').equals(id).delete();
     });
+    cloudSync.deleteHabit(id);
   }
 
   // --- Habit Logs ---
@@ -65,6 +72,7 @@ export class DexieDataStore implements IDataStore {
     if (existing) {
       const nextState = !existing.completed;
       await db.habitLogs.update(existing.id, { completed: nextState });
+      cloudSync.syncHabitLog({ ...existing, completed: nextState });
       return nextState;
     } else {
       const newLog: HabitLog = {
@@ -74,6 +82,7 @@ export class DexieDataStore implements IDataStore {
         completed: true,
       };
       await db.habitLogs.add(newLog);
+      cloudSync.syncHabitLog(newLog);
       return true;
     }
   }
@@ -86,13 +95,16 @@ export class DexieDataStore implements IDataStore {
 
     if (existing) {
       await db.habitLogs.update(existing.id, { completed });
+      cloudSync.syncHabitLog({ ...existing, completed });
     } else {
-      await db.habitLogs.add({
+      const newLog: HabitLog = {
         id: crypto.randomUUID(),
         habitId,
         date,
         completed,
-      });
+      };
+      await db.habitLogs.add(newLog);
+      cloudSync.syncHabitLog(newLog);
     }
   }
 
@@ -104,6 +116,7 @@ export class DexieDataStore implements IDataStore {
 
   async saveTask(task: Task): Promise<void> {
     await db.tasks.put(task);
+    cloudSync.syncTask(task);
   }
 
   async toggleTask(id: string): Promise<boolean> {
@@ -113,11 +126,14 @@ export class DexieDataStore implements IDataStore {
 
     await db.transaction('rw', db.tasks, async () => {
       await db.tasks.update(id, { done: nextState });
+      cloudSync.syncTask({ ...task, done: nextState });
+
       // If completing a parent task, also complete its subtasks
       if (nextState) {
         const subtasks = await db.tasks.where('parentId').equals(id).toArray();
         for (const sub of subtasks) {
           await db.tasks.update(sub.id, { done: true });
+          cloudSync.syncTask({ ...sub, done: true });
         }
       }
     });
@@ -128,8 +144,13 @@ export class DexieDataStore implements IDataStore {
   async deleteTask(id: string): Promise<void> {
     await db.transaction('rw', db.tasks, async () => {
       await db.tasks.delete(id);
+      const subtasks = await db.tasks.where('parentId').equals(id).toArray();
       await db.tasks.where('parentId').equals(id).delete();
+      for (const s of subtasks) {
+        cloudSync.deleteTask(s.id);
+      }
     });
+    cloudSync.deleteTask(id);
   }
 
   // --- Export / Import ---
@@ -160,22 +181,37 @@ export class DexieDataStore implements IDataStore {
 
       if (payload.habits.length > 0) {
         await db.habits.bulkAdd(payload.habits);
+        for (const h of payload.habits) {
+          cloudSync.syncHabit(h);
+        }
       }
       if (payload.habitLogs && payload.habitLogs.length > 0) {
         await db.habitLogs.bulkAdd(payload.habitLogs);
+        for (const l of payload.habitLogs) {
+          cloudSync.syncHabitLog(l);
+        }
       }
       if (payload.tasks.length > 0) {
         await db.tasks.bulkAdd(payload.tasks);
+        for (const t of payload.tasks) {
+          cloudSync.syncTask(t);
+        }
       }
     });
   }
 
   async clearAllData(): Promise<void> {
+    const habits = await db.habits.toArray();
+    const tasks = await db.tasks.toArray();
+
     await db.transaction('rw', db.habits, db.habitLogs, db.tasks, async () => {
       await db.habits.clear();
       await db.habitLogs.clear();
       await db.tasks.clear();
     });
+
+    for (const h of habits) cloudSync.deleteHabit(h.id);
+    for (const t of tasks) cloudSync.deleteTask(t.id);
   }
 
   async seedDemoData(): Promise<void> {

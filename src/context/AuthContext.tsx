@@ -10,6 +10,7 @@ import {
   onAuthStateChanged,
 } from 'firebase/auth';
 import { auth, isFirebaseConfigured } from '../services/firebase';
+import { cloudSync } from '../services/cloudSync';
 
 interface AuthContextType {
   user: User | null;
@@ -52,14 +53,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUserNameState(currentUser.displayName);
           localStorage.setItem('habit_studio_username', currentUser.displayName);
         }
+        setSyncStatus('syncing');
+        await cloudSync.startSync(currentUser.uid);
         setSyncStatus('synced');
       } else {
-        setSyncStatus(isCloudConfigured ? 'local' : 'local');
+        cloudSync.stopSync();
+        setSyncStatus('local');
       }
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      cloudSync.stopSync();
+    };
   }, [isCloudConfigured]);
 
   const updateUserName = async (name: string) => {
